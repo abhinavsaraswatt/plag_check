@@ -89,7 +89,7 @@ def calculate_word_match_percentage(line, content):
 def process_line_for_review(line, match_threshold=30):
     """Process a line to check if it should be reviewed based on matching words in content."""
     # Search the line on Google and get top 5 results
-    print(f"---------------Searching for: {line}\n\n\n")
+    print(f"Searching for: {line}\n\n\n")
     search_results = list(search(line, num_results=5))
     
     for url in search_results:
@@ -98,19 +98,23 @@ def process_line_for_review(line, match_threshold=30):
         
 
         match_percentage, matching_words  = calculate_word_match_percentage(line, content)
-        print(f"Similarity with {url}: {match_percentage:.2f}%\nWords: {matching_words}\n\n")
+        print(f"Similarity with {url}: {match_percentage:.2f}%\nWords: {matching_words}\n\n\n")
+
+        # If the match percentage is above the threshold, mark for manual review
+        if match_percentage >= match_threshold:
+            print(f"\nxxxxxxxxxxxxxxxxxxxxxx Line marked for manual review due to words match: {line}\n\n\n")
+            # return line, matching_words  # Line marked for review
 
         # Check for consecutive matches of 4 or more words
         matched_consecutive = check_consecutive_matches(line, content)
         if matched_consecutive:
-            print(f"Consecutive match found: \n{', \n'.join(matched_consecutive)}\n")
-            print(f"Line marked for manual review due to consecutive word match: {line}")
-            # return line, matched_consecutive  # Return line and matched consecutive phrases
+            text = ', \n'.join(matched_consecutive)
+            print(f"Consecutive match found: \n{text}\n")
+            print(f"\nyyyyyyyyyyyyyyyyyyyy Line marked for manual review due to consecutive word match: \n{line}\n\n\n")
+            return line, matched_consecutive  # Return line and matched consecutive phrases
+            # returning this because here are confirm, unlike below percentage criteria
         
-        # If the match percentage is above the threshold, mark for manual review
-        if match_percentage >= match_threshold:
-            print(f"xxxxxxxxxxxxxxxxxxxxxx Line marked for manual review due to words match: {line}\n\n\n")
-            # return line, matching_words  # Line marked for review
+
     
     return None, matching_words  # No match found for review
 
@@ -130,15 +134,23 @@ lines = split_text_by_dot(content, max_words=30)
 #         "with many NCP leaders getting inducted into the cabinet.")
 
 marked_lines_words = {}
+i = 0
 for line in lines:
+    i += 1
+    print(f"\n\n\n{i}.---------------------------------------------------------------------")
     review_line, matching_words = process_line_for_review(line)
+    print(f"{i}.---------------------------------------------------------------------\n\n\n")
+    # print(f"Review Line: {review_line}, Matching Words: {matching_words}")
+
     if review_line:
         marked_lines_words[review_line] = matching_words
 
-print("\nLines marked for manual review:\n\n\n")
+# print(marked_lines_words)
+print('---------------------------------------RESULT---------------------------------------')
+print("\nLines marked for manual review (under consecutive words only):\n\n\n")
 i = 0
 for marked_line in marked_lines_words.keys():
     i += 1
-    print(f"{i}. Line: {marked_line}\nWords:{marked_lines_words[marked_line]}\n\n\n")
+    print(f"{i}. \nLine: {marked_line}\n\nWords:{marked_lines_words[marked_line]}\n\n\n")
 
 print(f"Total lines checked: {len(lines)}")
