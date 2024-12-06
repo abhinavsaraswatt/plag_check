@@ -101,7 +101,8 @@ def process_line_for_review(line, match_threshold=30):
         content = fetch_content(url)
 
         
-        if current_place not in url:
+        if current_place not in url or current_place == "":
+            # print(type(current_place))
             match_percentage, matching_words  = calculate_word_match_percentage(line, content)
             print(f"Similarity with {url}: {match_percentage:.2f}%\nWords: {matching_words}\n\n\n")
 
