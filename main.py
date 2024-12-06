@@ -91,7 +91,8 @@ def process_line_for_review(line, match_threshold=30):
     # Search the line on Google and get top 5 results
     print(f"Searching for: {line}\n\n\n")
     search_results = list(search(line, num_results=5))
-    
+    matching_words = set()  # Initialize as an empty set to avoid UnboundLocalError
+
     for url in search_results:
         content = fetch_content(url)
 
@@ -102,7 +103,7 @@ def process_line_for_review(line, match_threshold=30):
 
         # If the match percentage is above the threshold, mark for manual review
         if match_percentage >= match_threshold:
-            print(f"\nxxxxxxxxxxxxxxxxxxxxxx Line marked for manual review due to words match: {line}\n\n\n")
+            print(f"\nxxxxxxxxxxxxxxxxxxxxxx Line marked for manual review due to words match: \n{line}\n\n\n")
             # return line, matching_words  # Line marked for review
 
         # Check for consecutive matches of 4 or more words
