@@ -62,6 +62,7 @@ def fetch_content(url):
         print(f"Error fetching {url}: {e}\n\n\n")
         return ""
 
+
 def calculate_word_match_percentage(line, content):
     """Calculate the percentage of line's words found in the content."""
     line_words = set(line.lower().split())  # Words in the line
@@ -70,7 +71,7 @@ def calculate_word_match_percentage(line, content):
     matching_words = line_words.intersection(content_words)  # Words in both
     match_percentage = (len(matching_words) / len(line_words)) * 100  # Calculate percentage
     
-    return match_percentage
+    return match_percentage, matching_words 
 
 def process_line_for_review(line, match_threshold=30):
     """Process a line to check if it should be reviewed based on matching words in content."""
@@ -80,15 +81,15 @@ def process_line_for_review(line, match_threshold=30):
     
     for url in search_results:
         content = fetch_content(url)
-        match_percentage = calculate_word_match_percentage(line, content)
-        print(f"Similarity with {url}: {match_percentage:.2f}%\n\n\n")
+        match_percentage, matching_words  = calculate_word_match_percentage(line, content)
+        print(f"Similarity with {url}: {match_percentage:.2f}%\nWords: {matching_words}\n\n")
         
         # If the match percentage is above the threshold, mark for manual review
         if match_percentage >= match_threshold:
             print(f"Line marked for manual review: {line}\n\n\n")
-            return line  # Line marked for review
+            return line, matching_words  # Line marked for review
     
-    return None  # No match found for review
+    return None, matching_words  # No match found for review
 
 # Example usage
 # text = "This is an example text where we want to split the content into lines that have a maximum of thirty words per line, ensuring the text is easier to read and process."
@@ -105,12 +106,14 @@ lines = split_text_by_dot(content, max_words=30)
 # line = ("NCP senior leader Ajit Pawar parted from the NCP with some MLAs and took oath as the deputy Chief minister, "
 #         "with many NCP leaders getting inducted into the cabinet.")
 
-marked_lines = []
+marked_lines_words = {}
 for line in lines:
-    review_line = process_line_for_review(line)
+    review_line, matching_words = process_line_for_review(line)
     if review_line:
-        marked_lines.append(review_line)
+        marked_lines_words[review_line] = matching_words
 
 print("\nLines marked for manual review:\n\n\n")
-for marked_line in marked_lines:
-    print(marked_line)
+i = 0
+for marked_line in marked_lines_words.keys():
+    i += 1
+    print(f"{i}. Line: {marked_line}\n{marked_lines_words[marked_line]}\n\n\n")
