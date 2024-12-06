@@ -5,7 +5,11 @@ from bs4 import BeautifulSoup
 from googlesearch import search
 from difflib import SequenceMatcher
 
-with open('temp_short.txt', 'r', encoding='utf-8') as file:
+file_name = f"output_chunks/{input('Write file name to check with extension: output_chunks/')}"
+# file_name = 'large_text.txt'
+# place from where we obtain content
+current_place = input('Enter current website domain name (in form: abc.in): ')
+with open(file_name, 'r', encoding='utf-8') as file:
     content = file.read()
 
 def preprocess_text(text):
@@ -97,23 +101,23 @@ def process_line_for_review(line, match_threshold=30):
         content = fetch_content(url)
 
         
+        if current_place not in url:
+            match_percentage, matching_words  = calculate_word_match_percentage(line, content)
+            print(f"Similarity with {url}: {match_percentage:.2f}%\nWords: {matching_words}\n\n\n")
 
-        match_percentage, matching_words  = calculate_word_match_percentage(line, content)
-        print(f"Similarity with {url}: {match_percentage:.2f}%\nWords: {matching_words}\n\n\n")
+            # If the match percentage is above the threshold, mark for manual review
+            if match_percentage >= match_threshold:
+                print(f"\nxxxxxxxxxxxxxxxxxxxxxx Line marked for manual review due to words match: \n{line}\n\n\n")
+                # return line, matching_words  # Line marked for review
 
-        # If the match percentage is above the threshold, mark for manual review
-        if match_percentage >= match_threshold:
-            print(f"\nxxxxxxxxxxxxxxxxxxxxxx Line marked for manual review due to words match: \n{line}\n\n\n")
-            # return line, matching_words  # Line marked for review
-
-        # Check for consecutive matches of 4 or more words
-        matched_consecutive = check_consecutive_matches(line, content)
-        if matched_consecutive:
-            text = ', \n'.join(matched_consecutive)
-            print(f"Consecutive match found: \n{text}\n")
-            print(f"\nyyyyyyyyyyyyyyyyyyyy Line marked for manual review due to consecutive word match: \n{line}\n\n\n")
-            return line, matched_consecutive  # Return line and matched consecutive phrases
-            # returning this because here are confirm, unlike below percentage criteria
+            # Check for consecutive matches of 4 or more words
+            matched_consecutive = check_consecutive_matches(line, content)
+            if matched_consecutive:
+                text = ', \n'.join(matched_consecutive)
+                print(f"Consecutive match found: \n{text}\n")
+                print(f"\nyyyyyyyyyyyyyyyyyyyy Line marked for manual review due to consecutive word match: \n{line}\n\n\n")
+                return line, matched_consecutive  # Return line and matched consecutive phrases
+                # returning this because here are confirm, unlike below percentage criteria
         
 
     
