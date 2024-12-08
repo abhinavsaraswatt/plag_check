@@ -1,4 +1,18 @@
 import os
+import shutil
+
+def clean_directory(directory_path):
+    """Remove all files and subdirectories in the specified directory."""
+    if os.path.exists(directory_path):
+        for file_or_dir in os.listdir(directory_path):
+            file_or_dir_path = os.path.join(directory_path, file_or_dir)
+            # Check if it is a file or directory and remove it
+            if os.path.isfile(file_or_dir_path) or os.path.islink(file_or_dir_path):
+                os.unlink(file_or_dir_path)  # Delete the file
+            elif os.path.isdir(file_or_dir_path):
+                shutil.rmtree(file_or_dir_path)  # Delete the directory
+    else:
+        os.makedirs(directory_path)  # Create the directory if it doesn't exist
 
 def split_text_by_last_dot(input_file, output_dir, max_words=1000):
     """
@@ -54,4 +68,6 @@ def split_text_by_last_dot(input_file, output_dir, max_words=1000):
 input_file = 'large_text.txt'  # Replace with your input file path
 output_dir = 'output_chunks'   # Directory to save the output files
 
+clean_directory(output_dir)
+print(f"Directory '{output_dir}' has been cleaned.")
 split_text_by_last_dot(input_file, output_dir, max_words=1000)
