@@ -12,3 +12,5 @@
    - example of words not taken into consideration for marking plag: west, kings, rajput, manganiyars, rajasthan
 
    - consecutive words check: should also view in this respect.
+
+7. one more benefit of this tool is: it also review of big big pdfs.
