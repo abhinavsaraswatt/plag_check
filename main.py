@@ -145,17 +145,36 @@ def check_consecutive_matches(line, content, threshold=4):
     return matched_consecutive
 
 
-def fetch_content(url):
-    """Fetch content of a webpage."""
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
-        # Extract visible text
-        return ' '.join(soup.stripped_strings)
-    except Exception as e:
-        print(f"Error fetching {url}: {e}\n\n\n")
-        return ""
+def fetch_content(url, retries=2, timeout=10):
+    """Fetch content of a webpage with retry mechanism."""
+    headers = {
+    "Referer": "https://www.google.com",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Connection": "keep-alive",
+    "Cache-Control": "no-cache",
+    "Upgrade-Insecure-Requests": "1"
+}
+    for attempt in range(1, retries + 1):
+        try:
+            
+            print(f"Attempt {attempt} to fetch: {url}")
+
+            response = requests.get(
+                url, 
+                timeout=timeout, 
+                headers=headers
+            )
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, 'html.parser')
+            # Extract visible text
+            return ' '.join(soup.stripped_strings)
+        except Exception as e:
+            print(f"Error fetching {url} on attempt {attempt}: {e}")
+            if attempt == retries:
+                print("Max retries reached. Moving to next URL.")
+                return ""
+
 
 
 def calculate_word_match_percentage(line, content):
