@@ -5,12 +5,90 @@ from bs4 import BeautifulSoup
 from googlesearch import search
 from difflib import SequenceMatcher
 
-file_name = f"output_chunks/{input('Write file name to check with extension: output_chunks/')}"
-# file_name = 'large_text.txt'
-# place from where we obtain content
-current_place = input('Enter current website domain name (in form: abc.in): ')
-with open(file_name, 'r', encoding='utf-8') as file:
-    content = file.read()
+from datetime import datetime
+
+
+def initialize_html_report(file_path):
+    """Initialize the HTML report with basic structure."""
+    with open(file_path, "w", encoding="utf-8") as html_file:
+        html_file.write(f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Check Results</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }}
+        .line {{ margin-bottom: 20px; }}
+        .marked {{ color: red; font-weight: bold; }}
+        .timestamp {{ font-size: 0.9em; color: gray; }}
+    </style>
+</head>
+<body>
+    <h1>Line Check Results</h1>
+    <p class="timestamp">Report initialized at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+    <div id="results">
+""")
+
+def append_to_html_report(file_path, percentage_matches, consecutive_matches):
+    """Append all results to the HTML report."""
+    with open(file_path, "w", encoding="utf-8") as html_file:
+        html_file.write("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Matching Results</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .line { margin-bottom: 20px; }
+                .matched { color: green; font-weight: bold; }
+                .url { font-size: 14px; color: blue; }
+            </style>
+        </head>
+        <body>
+            <h1>Matching Results</h1>
+            <h2>Percentage Matches</h2>
+        """)
+
+        i = 0
+        for line, (words, url) in percentage_matches.items():
+            i += 1
+            html_file.write(f"""
+            <div class="line">
+                <p>{i}. <strong>Line:</strong> {line}</p>
+                <p class="matched">Matching Words: <br>{', <br>'.join(words)}</p>
+                <p class="url">Matched URL: <a href="{url}" target="_blank">{url}</a></p>
+            </div>
+            """)
+
+        html_file.write("<h2>Consecutive Matches</h2>")
+
+        i = 0
+        for line, (phrases, url) in consecutive_matches.items():
+            i += 1
+            html_file.write(f"""
+            <div class="line">
+                <p>{i}. <strong>Line:</strong> {line}</p>
+                <p class="matched">Matched Phrases: <br>{', <br>'.join(phrases)}</p>
+                <p class="url">Matched URL: <a href="{url}" target="_blank">{url}</a></p>
+            </div>
+            """)
+
+        html_file.write("""
+        </body>
+        </html>
+        """)
+
+
+def finalize_html_report(file_path):
+    """Finalize the HTML report by closing tags."""
+    with open(file_path, "a", encoding="utf-8") as html_file:
+        html_file.write("""
+    </div>
+</body>
+</html>
+""")
+
 
 def preprocess_text(text):
     # Add a space after a dot if it's directly followed by a number or text without a space
@@ -90,39 +168,46 @@ def calculate_word_match_percentage(line, content):
     
     return match_percentage, matching_words 
 
+percentage_matches = {}
+consecutive_matches = {}
 def process_line_for_review(line, match_threshold=30):
     """Process a line to check if it should be reviewed based on matching words in content."""
-    # Search the line on Google and get top 5 results
     print(f"Searching for: {line}\n\n\n")
     search_results = list(search(line, num_results=5))
     matching_words = set()  # Initialize as an empty set to avoid UnboundLocalError
+    matched_url_percentage = None
+    matched_url_consecutive = None
+    matched_consecutive = []
 
     for url in search_results:
         content = fetch_content(url)
-
-        
         if current_place not in url or current_place == "":
-            # print(type(current_place))
-            match_percentage, matching_words  = calculate_word_match_percentage(line, content)
+            match_percentage, matching_words = calculate_word_match_percentage(line, content)
             print(f"Similarity with {url}: {match_percentage:.2f}%\nWords: {matching_words}\n\n\n")
 
-            # If the match percentage is above the threshold, mark for manual review
+            # Check percentage match
             if match_percentage >= match_threshold:
-                print(f"\nxxxxxxxxxxxxxxxxxxxxxx Line marked for manual review due to words match: \n{line}\n\n\n")
-                # return line, matching_words  # Line marked for review
+                matched_url_percentage = url  # Save URL for percentage match
+                print(f"Line marked for percentage match review: {line}\n")
+                percentage_matches[line] = (matching_words, matched_url_percentage)
 
-            # Check for consecutive matches of 4 or more words
+            # Check consecutive matches
             matched_consecutive = check_consecutive_matches(line, content)
             if matched_consecutive:
-                text = ', \n'.join(matched_consecutive)
-                print(f"Consecutive match found: \n{text}\n")
-                print(f"\nyyyyyyyyyyyyyyyyyyyy Line marked for manual review due to consecutive word match: \n{line}\n\n\n")
-                return line, matched_consecutive  # Return line and matched consecutive phrases
-                # returning this because here are confirm, unlike below percentage criteria
-        
+                matched_url_consecutive = url  # Save URL for consecutive match
+                print(f"Consecutive match found: {', '.join(matched_consecutive)}\n")
+                consecutive_matches[line] = (matched_consecutive, matched_url_consecutive)
+                break  # Stop further checking for consecutive matches after a match is found
+    return
 
-    
-    return None, matching_words  # No match found for review
+
+file_name = f"output_chunks/{input('Write file name to check with extension: output_chunks/')}"
+# file_name = 'large_text.txt'
+# place from where we obtain content
+current_place = input('Enter current website domain name (in form: abc.in): ')
+
+with open(file_name, 'r', encoding='utf-8') as file:
+    content = file.read()
 
 # Example usage
 # text = "This is an example text where we want to split the content into lines that have a maximum of thirty words per line, ensuring the text is easier to read and process."
@@ -139,26 +224,16 @@ lines = split_text_by_dot(content, max_words=30)
 # line = ("NCP senior leader Ajit Pawar parted from the NCP with some MLAs and took oath as the deputy Chief minister, "
 #         "with many NCP leaders getting inducted into the cabinet.")
 
-marked_lines_words = {}
-i = 0
-for line in lines:
-    i += 1
-    print(f"\n\n\n{i}.---------------------------------------------------------------------")
-    review_line, matching_words = process_line_for_review(line)
-    print(f"{i}.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\n\n")
-    # print(f"Review Line: {review_line}, Matching Words: {matching_words}")
+# Initialize HTML report
+html_file_path = f"{file_name}.html"
+initialize_html_report(html_file_path)
 
-    if review_line:
-        marked_lines_words[review_line] = matching_words
+for i, line in enumerate(lines, start=1):
+    print(f"Processing Line {i}/{len(lines)}")
+    process_line_for_review(line)
 
-# print(marked_lines_words)
-print('---------------------------------------RESULT---------------------------------------')
-print("\nLines marked for manual review (under consecutive words only):\n\n\n")
-i = 0
-for marked_line in marked_lines_words.keys():
-    i += 1
-    print(f"{i}. \nLine: {marked_line}\n\nWords:{marked_lines_words[marked_line]}\n\n\n")
-print('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxRESULTxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    # After processing all lines, save results to the HTML report
+    append_to_html_report(html_file_path, percentage_matches, consecutive_matches)
 
 
-print(f"\n\nTotal lines checked: {len(lines)}")
+print(f"Results saved to {html_file_path}")
