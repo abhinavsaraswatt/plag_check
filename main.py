@@ -43,6 +43,7 @@ def append_to_html_report(file_path, percentage_matches, consecutive_matches):
                 .line { margin-bottom: 20px; }
                 .matched { color: green; font-weight: bold; }
                 .url { font-size: 14px; color: blue; }
+                .remaining-urls { font-size: 14px; color: darkorange; }
             </style>
         </head>
         <body>
@@ -64,7 +65,7 @@ def append_to_html_report(file_path, percentage_matches, consecutive_matches):
         html_file.write("<h2>Consecutive Matches</h2>")
 
         i = 0
-        for line, (phrases, url) in consecutive_matches.items():
+        for line, (phrases, url, remaining_urls) in consecutive_matches.items():
             i += 1
             html_file.write(f"""
             <div class="line">
@@ -73,6 +74,13 @@ def append_to_html_report(file_path, percentage_matches, consecutive_matches):
                 <p class="url">Matched URL: <a href="{url}" target="_blank">{url}</a></p>
             </div>
             """)
+
+            
+            if remaining_urls:
+                html_file.write("<p class='remaining-urls'>Remaining URLs that were not checked:</p>")
+                for remaining_url in remaining_urls:
+                    html_file.write(f"<p class='remaining-urls'><a href='{remaining_url}' target='_blank'>{remaining_url}</a></p>")
+            html_file.write("</div>")
 
         html_file.write("""
         </body>
@@ -219,8 +227,9 @@ def process_line_for_review(line, match_threshold=30):
     matched_url_percentage = None
     matched_url_consecutive = None
     matched_consecutive = []
+    remaining_urls = []  # Initialize to an empty list
 
-    for url in search_results:
+    for idx, url in enumerate(search_results):
         try:
             # Check if the URL ends with a PDF extension
             if '.pdf' in url.lower():
@@ -229,7 +238,7 @@ def process_line_for_review(line, match_threshold=30):
                 print(f"Estimated size for {url}: {estimated_size}")
 
                 # Prompt to confirm fetching if size is too large
-                if "KB" in estimated_size and float(estimated_size.split()[0]) > 1024:  # Example threshold: 500 KB
+                if "KB" in estimated_size and float(estimated_size.split()[0]) > 2048:  # Example threshold: 500 KB
                     proceed = input(f"Content size for {url} is large ({estimated_size}). Proceed? (y/n): ").strip().lower()
                     if proceed != 'y':
                         print(f"Skipping URL: {url}\n")
@@ -251,13 +260,15 @@ def process_line_for_review(line, match_threshold=30):
                 if matched_consecutive:
                     matched_url_consecutive = url  # Save URL for consecutive match
                     print(f"Consecutive match found: {', '.join(matched_consecutive)}\n")
-                    consecutive_matches[line] = (matched_consecutive, matched_url_consecutive)
+                    remaining_urls = search_results[idx + 1:]
+                    consecutive_matches[line] = (matched_consecutive, matched_url_consecutive, remaining_urls)
+
                     break  # Stop further checking for consecutive matches after a match is found
         except KeyboardInterrupt:
             # Skip this URL if Ctrl+C is pressed
             print(f"Skipping URL: {url}\n")
             continue  # Move to the next URL
-    return
+    return remaining_urls
 
 
 file_name = f"output_chunks/{input('Write file name to check with extension: output_chunks/')}"
