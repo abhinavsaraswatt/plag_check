@@ -187,6 +187,28 @@ def calculate_word_match_percentage(line, content):
     
     return match_percentage, matching_words 
 
+def estimate_content_size(url):
+    """Estimate the size of the content to be fetched from a URL."""
+    try:
+        # Make a HEAD request to get headers
+        response = requests.head(url, timeout=10, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+            "Accept": "*/*",
+        })
+        response.raise_for_status()
+
+        # Extract content length from headers
+        content_length = response.headers.get('Content-Length')
+        if content_length:
+            size_in_kb = int(content_length) / 1024  # Convert bytes to KB
+            return f"{size_in_kb:.2f} KB"
+        else:
+            return "Size unknown (Content-Length not provided)"
+    except Exception as e:
+        print(f"Error estimating size for {url}: {e}")
+        return "Error estimating size"
+
+
 percentage_matches = {}
 consecutive_matches = {}
 def process_line_for_review(line, match_threshold=30):
@@ -200,6 +222,19 @@ def process_line_for_review(line, match_threshold=30):
 
     for url in search_results:
         try:
+            # Check if the URL ends with a PDF extension
+            if '.pdf' in url.lower():
+                # Estimate size for PDF links
+                estimated_size = estimate_content_size(url)
+                print(f"Estimated size for {url}: {estimated_size}")
+
+                # Prompt to confirm fetching if size is too large
+                if "KB" in estimated_size and float(estimated_size.split()[0]) > 1024:  # Example threshold: 500 KB
+                    proceed = input(f"Content size for {url} is large ({estimated_size}). Proceed? (y/n): ").strip().lower()
+                    if proceed != 'y':
+                        print(f"Skipping URL: {url}\n")
+                        continue
+
             content = fetch_content(url)
             if current_place not in url or current_place == "":
                 match_percentage, matching_words = calculate_word_match_percentage(line, content)

@@ -15,3 +15,4 @@
 
 7. one more benefit of this tool is: it also review of big big pdfs.
 8. add feature which can skip pdf check if ctrl c is pressed.?????DONE
+9. adding feature which check size of data to be extracted from particular link???DONE
