@@ -199,24 +199,29 @@ def process_line_for_review(line, match_threshold=30):
     matched_consecutive = []
 
     for url in search_results:
-        content = fetch_content(url)
-        if current_place not in url or current_place == "":
-            match_percentage, matching_words = calculate_word_match_percentage(line, content)
-            print(f"Similarity with {url}: {match_percentage:.2f}%\nWords: {matching_words}\n\n\n")
+        try:
+            content = fetch_content(url)
+            if current_place not in url or current_place == "":
+                match_percentage, matching_words = calculate_word_match_percentage(line, content)
+                print(f"Similarity with {url}: {match_percentage:.2f}%\nWords: {matching_words}\n\n\n")
 
-            # Check percentage match
-            if match_percentage >= match_threshold:
-                matched_url_percentage = url  # Save URL for percentage match
-                print(f"Line marked for percentage match review: {line}\n")
-                percentage_matches[line] = (matching_words, matched_url_percentage)
+                # Check percentage match
+                if match_percentage >= match_threshold:
+                    matched_url_percentage = url  # Save URL for percentage match
+                    print(f"Line marked for percentage match review: {line}\n")
+                    percentage_matches[line] = (matching_words, matched_url_percentage)
 
-            # Check consecutive matches
-            matched_consecutive = check_consecutive_matches(line, content)
-            if matched_consecutive:
-                matched_url_consecutive = url  # Save URL for consecutive match
-                print(f"Consecutive match found: {', '.join(matched_consecutive)}\n")
-                consecutive_matches[line] = (matched_consecutive, matched_url_consecutive)
-                break  # Stop further checking for consecutive matches after a match is found
+                # Check consecutive matches
+                matched_consecutive = check_consecutive_matches(line, content)
+                if matched_consecutive:
+                    matched_url_consecutive = url  # Save URL for consecutive match
+                    print(f"Consecutive match found: {', '.join(matched_consecutive)}\n")
+                    consecutive_matches[line] = (matched_consecutive, matched_url_consecutive)
+                    break  # Stop further checking for consecutive matches after a match is found
+        except KeyboardInterrupt:
+            # Skip this URL if Ctrl+C is pressed
+            print(f"Skipping URL: {url}\n")
+            continue  # Move to the next URL
     return
 
 

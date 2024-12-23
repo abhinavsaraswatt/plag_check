@@ -14,3 +14,4 @@
    - consecutive words check: should also view in this respect.
 
 7. one more benefit of this tool is: it also review of big big pdfs.
+8. add feature which can skip pdf check if ctrl c is pressed.?????DONE
