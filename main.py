@@ -187,11 +187,15 @@ def fetch_content(url, retries=2, timeout=10):
 
 def calculate_word_match_percentage(line, content):
     """Calculate the percentage of line's words found in the content."""
+
     line_words = set(word for word in line.lower().split() if len(word) > 3)  # Words in the line
     content_words = set(word for word in content.lower().split() if len(word) > 3)  # Words in the content
     
     matching_words = line_words.intersection(content_words)  # Words in both
-    match_percentage = (len(matching_words) / len(line_words)) * 100  # Calculate percentage
+    try:
+        match_percentage = (len(matching_words) / len(line_words)) * 100  # Calculate percentage
+    except ZeroDivisionError:
+        match_percentage = 0
     
     return match_percentage, matching_words 
 
@@ -299,6 +303,7 @@ html_file_path = f"{file_name}.html"
 initialize_html_report(html_file_path)
 
 for i, line in enumerate(lines, start=1):
+
     print(f"Processing Line {i}/{len(lines)}")
     process_line_for_review(line)
 
