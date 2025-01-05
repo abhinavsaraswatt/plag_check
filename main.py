@@ -65,13 +65,21 @@ def append_to_html_report(file_path, percentage_matches, consecutive_matches):
         html_file.write("<h2>Consecutive Matches</h2>")
 
         i = 0
-        for line, (phrases, url, remaining_urls) in consecutive_matches.items():
+        for line, (phrases, url, remaining_urls, matched_surrounding_lines_5, current_surrounding_lines_4) in consecutive_matches.items():
+
+            matched_prev_line_2, matched_prev_line_1, matched_line, matched_next_line_1, matched_next_line_2 = matched_surrounding_lines_5
+
+            current_prev_line_2, current_prev_line_1, current_next_line_1, current_next_line_2 = current_surrounding_lines_4
+
             i += 1
             html_file.write(f"""
             <div class="line">
-                <p>{i}. <strong>Line:</strong> {line}</p>
+                <p>{i}. <strong>Current Line:</strong> {line}</p>
+                <p><strong>Current Line with Context:</strong>{current_prev_line_2} {current_prev_line_1} <strong>{line}</strong> {current_next_line_1} {current_next_line_2}</p>
+
                 <p class="matched">Matched Phrases: <br>{', <br>'.join(phrases)}</p>
                 <p class="url">Matched URL: <a href="{url}" target="_blank">{url}</a></p>
+                <p class="url"><strong>Matched Line with Context:</strong> <br>{matched_prev_line_2} {matched_prev_line_1} <strong>{matched_line}</strong> {matched_next_line_1} {matched_next_line_2}</p>
             </div>
             """)
 
@@ -141,16 +149,28 @@ def check_consecutive_matches(line, content, threshold=4):
     """Check if there are 4 or more consecutive matching words."""
     line_words = line.lower().split()
     # content_words = content.lower().split()
+    content_sentences = re.split(r'(?<=\.)', content.lower())  # Split content into sentences
     
     matched_consecutive = []
+    # Initialize surrounding lines with None
+    prev_line_2, prev_line_1, matched_line, next_line_1, next_line_2 = None, None, None, None, None
     
     # Check for consecutive word matches
     for i in range(len(line_words) - threshold + 1):
         phrase = ' '.join(line_words[i:i + threshold])
         if phrase in content.lower():
             matched_consecutive.append(phrase)
-    
-    return matched_consecutive
+            
+            for j, sentence in enumerate(content_sentences):
+                if phrase in sentence:
+                    # Grab two lines before and after
+                    prev_line_2 = content_sentences[j - 2] if j - 2 >= 0 else None
+                    prev_line_1 = content_sentences[j - 1] if j - 1 >= 0 else None
+                    matched_line = sentence
+                    next_line_1 = content_sentences[j + 1] if j + 1 < len(content_sentences) else None
+                    next_line_2 = content_sentences[j + 2] if j + 2 < len(content_sentences) else None
+    matched_surrouding_lines_5 = (prev_line_2, prev_line_1, matched_line, next_line_1, next_line_2)
+    return matched_consecutive, matched_surrouding_lines_5
 
 
 def fetch_content(url, retries=2, timeout=10):
@@ -223,7 +243,7 @@ def estimate_content_size(url):
 
 percentage_matches = {}
 consecutive_matches = {}
-def process_line_for_review(line, match_threshold=30):
+def process_line_for_review(line, current_prev_line_2=None, current_prev_line_1=None, current_next_line_1=None, current_next_line_2=None, match_threshold=30):
     """Process a line to check if it should be reviewed based on matching words in content."""
     print(f"Searching for: {line}\n\n\n")
     search_results = list(search(line, num_results=5))
@@ -232,6 +252,8 @@ def process_line_for_review(line, match_threshold=30):
     matched_url_consecutive = None
     matched_consecutive = []
     remaining_urls = []  # Initialize to an empty list
+
+    current_surrounding_lines_4 = (current_prev_line_2, current_prev_line_1, current_next_line_1, current_next_line_2)
 
     for idx, url in enumerate(search_results):
         try:
@@ -260,12 +282,12 @@ def process_line_for_review(line, match_threshold=30):
                     percentage_matches[line] = (matching_words, matched_url_percentage)
 
                 # Check consecutive matches
-                matched_consecutive = check_consecutive_matches(line, content)
+                matched_consecutive, matched_surrounding_lines_5 = check_consecutive_matches(line, content)
                 if matched_consecutive:
                     matched_url_consecutive = url  # Save URL for consecutive match
                     print(f"Consecutive match found: {', '.join(matched_consecutive)}\n")
                     remaining_urls = search_results[idx + 1:]
-                    consecutive_matches[line] = (matched_consecutive, matched_url_consecutive, remaining_urls)
+                    consecutive_matches[line] = (matched_consecutive, matched_url_consecutive, remaining_urls, matched_surrounding_lines_5, current_surrounding_lines_4)
 
                     break  # Stop further checking for consecutive matches after a match is found
         except KeyboardInterrupt:
@@ -302,13 +324,22 @@ lines = split_text_by_dot(content, max_words=30)
 html_file_path = f"{file_name}.html"
 initialize_html_report(html_file_path)
 
-for i, line in enumerate(lines, start=1):
+for i, line in enumerate(lines):
 
-    print(f"Processing Line {i}/{len(lines)}")
-    process_line_for_review(line)
+    # Get the previous two lines, ensuring indices don't go below zero
+    current_prev_line_2 = lines[i - 2] if i - 2 >= 0 else None
+    current_prev_line_1 = lines[i - 1] if i - 1 >= 0 else None
+
+    # Get the next two lines, ensuring indices don't exceed the length of the list
+    current_next_line_1 = lines[i + 1] if i + 1 < len(lines) else None
+    current_next_line_2 = lines[i + 2] if i + 2 < len(lines) else None
+
+    print(f"Processing Line {i + 1}/{len(lines)}")  # Use i + 1 for human-readable indexing
+    process_line_for_review(line, current_prev_line_2, current_prev_line_1, current_next_line_1, current_next_line_2)
 
     # After processing all lines, save results to the HTML report
     append_to_html_report(html_file_path, percentage_matches, consecutive_matches)
+
 
 
 print(f"Results saved to {html_file_path}")
