@@ -48,19 +48,20 @@ def append_to_html_report(file_path, percentage_matches, consecutive_matches):
         </head>
         <body>
             <h1>Matching Results</h1>
-            <h2>Percentage Matches</h2>
+            
         """)
 
-        i = 0
-        for line, (words, url) in percentage_matches.items():
-            i += 1
-            html_file.write(f"""
-            <div class="line">
-                <p>{i}. <strong>Line:</strong> {line}</p>
-                <p class="matched">Matching Words: <br>{', <br>'.join(words)}</p>
-                <p class="url">Matched URL: <a href="{url}" target="_blank">{url}</a></p>
-            </div>
-            """)
+        # i = 0
+        # for line, (words, url) in percentage_matches.items():
+        #     i += 1
+        #     html_file.write(f"""
+        #     <h2>Percentage Matches</h2>
+        #     <div class="line">
+        #         <p>{i}. <strong>Line:</strong> {line}</p>
+        #         <p class="matched">Matching Words: <br>{', <br>'.join(words)}</p>
+        #         <p class="url">Matched URL: <a href="{url}" target="_blank">{url}</a></p>
+        #     </div>
+        #     """)
 
         html_file.write("<h2>Consecutive Matches</h2>")
         #
