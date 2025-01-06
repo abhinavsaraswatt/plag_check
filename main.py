@@ -63,6 +63,7 @@ def append_to_html_report(file_path, percentage_matches, consecutive_matches):
             """)
 
         html_file.write("<h2>Consecutive Matches</h2>")
+        #
 
         i = 0
         for line, (phrases, url, remaining_urls, matched_surrounding_lines_5, current_surrounding_lines_4) in consecutive_matches.items():
