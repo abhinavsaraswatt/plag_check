@@ -17,3 +17,5 @@
 8. add feature which can skip pdf check if ctrl c is pressed.?????DONE
 9. adding feature which check size of data to be extracted from particular link???DONE
 10. in consecutive matches, also print remaining non checking urls???DONE
+
+11. can make one unique feature which only check emboldened words of google search??? instead of percentage words match??? or words match in context collected only???
