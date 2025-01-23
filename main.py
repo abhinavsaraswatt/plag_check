@@ -247,7 +247,7 @@ consecutive_matches = {}
 def process_line_for_review(line, current_prev_line_2=None, current_prev_line_1=None, current_next_line_1=None, current_next_line_2=None, match_threshold=30):
     """Process a line to check if it should be reviewed based on matching words in content."""
     print(f"Searching for: {line}\n\n\n")
-    search_results = list(search(line, num_results=5))
+    search_results = list(search(line, stop=5))
     matching_words = set()  # Initialize as an empty set to avoid UnboundLocalError
     matched_url_percentage = None
     matched_url_consecutive = None
@@ -266,7 +266,8 @@ def process_line_for_review(line, current_prev_line_2=None, current_prev_line_1=
 
                 # Prompt to confirm fetching if size is too large
                 if "KB" in estimated_size and float(estimated_size.split()[0]) > 2048:  # Example threshold: 500 KB
-                    proceed = input(f"Content size for {url} is large ({estimated_size}). Proceed? (y/n): ").strip().lower()
+                    # proceed = input(f"Content size for {url} is large ({estimated_size}). Proceed? (y/n): ").strip().lower()
+                    proceed = "n"
                     if proceed != 'y':
                         print(f"Skipping URL: {url}\n")
                         continue
