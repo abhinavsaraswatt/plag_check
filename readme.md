@@ -19,3 +19,5 @@
 10. in consecutive matches, also print remaining non checking urls???DONE
 
 11. can make one unique feature which only check emboldened words of google search??? instead of percentage words match??? or words match in context collected only???
+
+12. what this context is doing is checking if flow is same or not, this also helps to find if written with creative mind or copied from somewhere.
